@@ -30,7 +30,7 @@ export function buildForecastUrl(loc: WeatherLocation): string {
     hourly: HOURLY_VARS.join(','),
     daily: DAILY_VARS.join(','),
     timezone: 'auto',
-    forecast_days: '3',
+    forecast_days: '5', // 5 days so the official 2-consecutive-day emergency criterion can be checked
     timeformat: 'unixtime',
     wind_speed_unit: 'kmh',
     temperature_unit: 'celsius',

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useId, useState, type FormEvent } from 'react';
-import { ExternalLink, Flag, Plus } from 'lucide-react';
+import { Flag, Plus } from 'lucide-react';
 import { useApp } from '../hooks/AppState';
 import { useI18n } from '../i18n';
 import { Button, Chip, Field, Notice, PageHeader, Panel, inputClass } from '../components/ui';
-import { RESOURCE_COLORS, externalDirectionsUrl } from '../data/resources';
+import { RESOURCE_COLORS } from '../data/resources';
+import { PlacesStatusLine, ResourceDetails, ResourceLegend, displayName, sourceTag } from '../components/ResourceDetails';
 import { useResources } from '../hooks/useResources';
 import { addReport, addSuggestion, loadReports, removeSuggestion, validateSuggestion, type SuggestionError } from '../services/resourceStore';
 import type { ResourceType } from '../types/resources';
@@ -11,18 +12,22 @@ import type { ResourceType } from '../types/resources';
 // Leaflet is only needed on this page, so it is loaded on demand.
 const ResourceMap = lazy(() => import('../components/ResourceMap').then((m) => ({ default: m.ResourceMap })));
 
-const TYPES: ResourceType[] = ['water', 'cooling', 'assistance'];
+/** Filters for mapped places. User reports have their own toggle. */
+const TYPES: Array<Extract<ResourceType, 'water' | 'park' | 'indoor'>> = ['water', 'park', 'indoor'];
+/** Types a user can suggest. They are always stored as unverified reports. */
+type ReportType = Extract<ResourceType, 'water' | 'cooling' | 'assistance'>;
+const REPORT_TYPES: ReportType[] = ['water', 'cooling', 'assistance'];
 
 export function MapPage() {
   const { t } = useI18n();
-  const { location } = useApp();
+  const { location, demoMode } = useApp();
   const id = useId();
-  const { types: typesOn, toggleType, includeReports: showReports, setIncludeReports: setShowReports, visible, reloadSuggestions } = useResources(location);
+  const { types: typesOn, toggleType, includeReports: showReports, setIncludeReports: setShowReports, visible, counts, reloadSuggestions, places, retry } = useResources(location, demoMode);
   const [reports, setReports] = useState(loadReports);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [form, setForm] = useState({ type: 'water' as ResourceType, name: '', description: '', lat: '', lon: '', hours: '', accessibility: '' });
+  const [form, setForm] = useState({ type: 'water' as ReportType, name: '', description: '', lat: '', lon: '', hours: '', accessibility: '' });
   const [formErrors, setFormErrors] = useState<SuggestionError[]>([]);
   const [flash, setFlash] = useState<string | null>(null);
   const [reportNote, setReportNote] = useState('');
@@ -69,7 +74,8 @@ export function MapPage() {
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('map.filters')}>
         {TYPES.map((ty) => (
           <Chip key={ty} pressed={typesOn[ty]} onClick={() => toggleType(ty)} color={RESOURCE_COLORS[ty]}>
-            {t(`map.type.${ty}`)}
+            {t(`map.chip.${ty}`)}
+            {places.status !== 'loading' && <span className="num text-faint">{counts[ty]}</span>}
           </Chip>
         ))}
         <Chip pressed={showReports} onClick={() => setShowReports(!showReports)}>
@@ -99,9 +105,14 @@ export function MapPage() {
               pickedPoint={formOpen && form.lat && form.lon ? [Number(form.lat), Number(form.lon)] : null}
               centerLabel={`${t('map.center')}: ${location.name}`}
               ariaLabel={t('map.mapLabel')}
+              labelFor={(r) => displayName(r, t)}
             />
           </Suspense>
-          <p className="mt-2 text-xs text-faint">{t('map.tilesNote')}</p>
+          <div className="mt-2 flex flex-col gap-1.5">
+            <ResourceLegend />
+            <PlacesStatusLine state={places} count={visible.length} place={location.name} onRetry={retry} />
+            <p className="text-xs text-faint">{t('map.tilesNote')}</p>
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -120,11 +131,11 @@ export function MapPage() {
                     >
                       <span aria-hidden className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: RESOURCE_COLORS[r.type] }} />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-fg">{r.name}</span>
+                        <span className="block text-sm font-medium text-fg">{displayName(r, t)}</span>
                         <span className="block text-xs text-muted">
                           {t(`map.type.${r.type}`)}, <span className="num">{t('map.distance', { km: km.toFixed(1) })}</span>
                         </span>
-                        <span className={`mt-0.5 block text-xs ${r.verification === 'verified' ? 'text-teal' : 'text-amber'}`}>{t(`map.verification.${r.verification}`)}</span>
+                        <span className={`mt-0.5 block text-xs ${r.verification === 'official' ? 'text-teal' : r.verification === 'mapped' ? 'text-muted' : 'text-amber'}`}>{sourceTag(r, t)}</span>
                       </span>
                     </button>
                   </li>
@@ -133,41 +144,14 @@ export function MapPage() {
             )}
           </Panel>
 
-          <Panel title={selected ? selected.r.name : undefined}>
+          <Panel>
             {!selected ? (
               <p className="text-sm text-muted">{t('map.selectPrompt')}</p>
             ) : (
-              <div className="flex flex-col gap-3 text-sm">
-                {selected.r.verification !== 'verified' && (
-                  <Notice tone="warn">
-                    <strong className="font-semibold">{t(`map.verification.${selected.r.verification}`)}.</strong>{' '}
-                    {selected.r.verification === 'sample' ? t('map.sampleNote') : t('map.suggestIntro')}
-                  </Notice>
-                )}
-                {selected.r.description && <p className="text-fg">{selected.r.description}</p>}
-                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
-                  <dt className="text-muted">{t('map.form.type')}</dt>
-                  <dd>{t(`map.type.${selected.r.type}`)}</dd>
-                  <dt className="text-muted">{t('map.hours')}</dt>
-                  <dd>
-                    {selected.r.hours ?? '—'} {!selected.r.hoursVerified && <span className="text-amber">({t('map.hoursUnverified')})</span>}
-                  </dd>
-                  <dt className="text-muted">{t('map.accessibility')}</dt>
-                  <dd>{selected.r.accessibility ?? t('map.unknown')}</dd>
-                  <dt className="text-muted">{t('map.updated')}</dt>
-                  <dd className="num">{selected.r.lastUpdated ?? t('map.unknown')}</dd>
-                  <dt className="text-muted">{t('map.coords')}</dt>
-                  <dd className="num" dir="ltr">
-                    {selected.r.latitude.toFixed(4)}, {selected.r.longitude.toFixed(4)}
-                  </dd>
-                </dl>
-                <div>
-                  <a href={externalDirectionsUrl(selected.r.latitude, selected.r.longitude)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5">
-                    {t('map.directions')}
-                    <ExternalLink size={14} aria-hidden />
-                  </a>
-                  <p className="mt-0.5 text-xs text-faint">{t('map.directionsNote')}</p>
-                </div>
+              <ResourceDetails
+                item={selected}
+                footer={
+                  <>
                 <div className="border-t border-line pt-3">
                   <label htmlFor={`${id}-rn`} className="text-xs text-muted">
                     {t('map.reportNote')}
@@ -200,7 +184,9 @@ export function MapPage() {
                     {t('map.form.delete')}
                   </Button>
                 )}
-              </div>
+                  </>
+                }
+              />
             )}
           </Panel>
         </div>
@@ -211,10 +197,10 @@ export function MapPage() {
           <p className="mb-4 text-sm text-muted">{t('map.suggestIntro')}</p>
           <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2" noValidate>
             <Field label={t('map.form.type')} htmlFor={`${id}-ty`}>
-              <select id={`${id}-ty`} className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ResourceType })}>
-                {TYPES.map((ty) => (
+              <select id={`${id}-ty`} className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ReportType })}>
+                {REPORT_TYPES.map((ty) => (
                   <option key={ty} value={ty}>
-                    {t(`map.type.${ty}`)}
+                    {t(`map.reportType.${ty}`)}
                   </option>
                 ))}
               </select>

@@ -208,14 +208,14 @@ describe('alerts', () => {
 });
 
 describe('resources follow the selected city', () => {
-  const all = { water: true, cooling: true, assistance: true };
-  it('lists Karachi samples for Karachi and nothing for a far-away city', () => {
+  const all = { water: true, park: true, indoor: true, cooling: true, assistance: true };
+  it('lists Karachi demo entries for Karachi and nothing for a far-away city', () => {
     expect(nearbyResources(SAMPLE_RESOURCES, { latitude: 24.8607, longitude: 67.0011 }, all, true).length).toBe(5);
     expect(nearbyResources(SAMPLE_RESOURCES, { latitude: 51.5, longitude: -0.12 }, all, true)).toEqual([]);
   });
 
   it('applies type filters and sorts by distance', () => {
-    const list = nearbyResources(SAMPLE_RESOURCES, { latitude: 24.8607, longitude: 67.0011 }, { water: true, cooling: false, assistance: false }, true);
+    const list = nearbyResources(SAMPLE_RESOURCES, { latitude: 24.8607, longitude: 67.0011 }, { water: true, park: false, indoor: false, cooling: false, assistance: false }, true);
     expect(list.every((x) => x.r.type === 'water')).toBe(true);
     expect(list[0].km).toBeLessThanOrEqual(list[list.length - 1].km);
   });

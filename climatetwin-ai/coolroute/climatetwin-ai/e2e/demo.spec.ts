@@ -28,8 +28,8 @@ test.describe('CoolRoute walkthrough', () => {
     await expect(page.getByText(/Heat index changes by/)).toBeVisible();
 
     await page.getByRole('link', { name: 'Resource map' }).first().click();
-    await page.getByRole('button', { name: /Sample water point A/ }).first().click();
-    await expect(page.getByText('Sample entry, not a real facility').first()).toBeVisible();
+    await page.getByRole('button', { name: /Demo water point A/ }).first().click();
+    await expect(page.getByText(/Demo entry for testing the app offline/).first()).toBeVisible();
 
     await page.getByLabel('Language').first().selectOption('ur');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -74,5 +74,26 @@ test.describe('CoolRoute walkthrough', () => {
     await page.getByRole('option', { name: /Sindh, Pakistan/ }).click();
     await expect(page.locator('#page-title')).toHaveText('Hyderabad');
     await expect(page.getByText('38.2 °C').first()).toBeVisible();
+    await expect(page.getByText(/No published city or provincial heatwave criteria are integrated for Hyderabad/)).toBeVisible();
+  });
+
+  test('map places come from OpenStreetMap and are classified conservatively', async ({ page }) => {
+    await page.route('**/api.open-meteo.com/**', (route) => route.abort());
+    await page.route('**/overpass-api.de/**', (route) =>
+      route.fulfill({
+        json: {
+          elements: [
+            { type: 'node', id: 1, lat: 24.862, lon: 67.002, tags: { amenity: 'drinking_water', name: 'Sabeel water point' } },
+            { type: 'node', id: 2, lat: 24.863, lon: 67.003, tags: { amenity: 'drinking_water', drinking_water: 'no', name: 'Broken tap' } },
+            { type: 'node', id: 3, lat: 24.865, lon: 67.006, tags: { tourism: 'hotel', name: 'Hotel Example' } },
+          ],
+        },
+      }),
+    );
+    await page.goto('/#/map');
+    await expect(page.getByText('Sabeel water point').first()).toBeVisible();
+    await expect(page.getByText('Broken tap')).toHaveCount(0);
+    await page.getByRole('button', { name: /Hotel Example/ }).first().click();
+    await expect(page.getByText(/It is not a public cooling centre/).first()).toBeVisible();
   });
 });

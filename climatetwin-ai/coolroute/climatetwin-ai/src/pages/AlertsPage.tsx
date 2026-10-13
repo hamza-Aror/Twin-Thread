@@ -3,6 +3,7 @@ import { ExternalLink, Phone, TriangleAlert } from 'lucide-react';
 import { useApp } from '../hooks/AppState';
 import { useI18n, type MessageKey } from '../i18n';
 import { Button, CategoryBadge, Field, Notice, PageHeader, Panel, inputClass } from '../components/ui';
+import { OfficialCriteriaCard } from '../components/OfficialCriteriaCard';
 import { CATEGORY_COLORS, CATEGORY_INK, CATEGORY_ORDER, tint } from '../services/risk/categories';
 import { notificationStatus, requestNotificationPermission, showBrowserNotification, type NotificationSupport } from '../services/notifications';
 import type { AlertPrefs } from '../services/alerts';
@@ -42,6 +43,8 @@ export function AlertsPage() {
     <div className="flex flex-col gap-5">
       <PageHeader title={t('alerts.title')} />
 
+      {snap && <OfficialCriteriaCard snapshot={snap} />}
+
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <Panel title={t('alerts.active')}>
           {!prefs.enabled ? (
@@ -65,7 +68,7 @@ export function AlertsPage() {
               ))}
             </ul>
           )}
-          <p className="mt-4 text-xs text-faint">{t('alerts.rule')}</p>
+          <p className="mt-4 text-xs text-faint">{t('alerts.rule')} {t('dash.alertsNote')}</p>
           <div className="mt-3">
             <Button variant="ghost" onClick={() => navigate('outlook')}>
               {t('alerts.view')}

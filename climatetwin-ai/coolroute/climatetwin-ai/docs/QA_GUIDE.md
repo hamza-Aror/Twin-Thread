@@ -17,6 +17,30 @@ There's no fixed city list. Typing calls the free Open-Meteo Geocoding API, whic
 - Late responses for a previous city are ignored (the request is aborted, and the id check catches any that slip through).
 - This is unit-tested, and browser-tested with a deliberately slow response.
 
+**Why does the app show "Caution" at about 32 °C when PMD only alerts from 40 °C?**
+They measure different things.
+- **CoolRoute's risk** is a heat-stress estimate from the NWS heat index (temperature + humidity). 32 °C at 30% humidity gives a heat index of 30.8 °C (Caution); at 50% humidity it is 34.4 °C (Extreme caution).
+- **PMD's heatwave alerts** use forecast air temperature: Hot Day Alert from 40 °C, Hot Day Warning from 42 °C.
+
+The app shows both, separately and clearly labelled.
+
+**Which official criteria do you use, and where?**
+Only frameworks we verified from the issuer's own publication, and only inside their stated scope:
+- **Karachi Heatwave Management Plan (2017):** Karachi city.
+- **PMD RMC Punjab heatwave thresholds:** Punjab province, matched by country and province, so India's Punjab is excluded.
+
+NDMA's 2026 heatwave guidelines and PDMA Sindh alerts were checked; they contain no numeric thresholds. Everywhere else, the app says no published criteria are integrated. Results are always labelled a rule-based estimate, because no live PMD alert feed is integrated.
+
+**How do you handle the Heatwave Emergency level?**
+- **RMC Punjab:** its emergency also requires significant reports of heat illness and deaths, which we don't have. So we never show that level from temperature; we explain that the temperature part is met.
+- **Karachi plan:** its Red level is defined by temperature persistence (≥ 42 °C with minimum ≥ 30 °C for 2+ days), so we show it, adding that only PMD and the Commissioner Karachi can declare an emergency.
+
+**Where do the map places come from? Are they real?**
+- **Source:** OpenStreetMap, via the free Overpass API, searched around the selected coordinates (water within 5 km, parks and hotels within 3 km).
+- **Classification is conservative.** Drinking water requires explicit tags (amenity=drinking_water, drinking_water=yes, fountain=drinking). Points tagged not drinkable, private or disused are excluded. Parks are possible shaded rest areas, never cooling centres. Hotels are only possible indoor options: AC, entry, fees and hours are unverified.
+- **No invented places:** "Official cooling centre" is never inferred, and no official list exists, so none are shown.
+- **Requests:** results are cached for 12 hours, requests for the same place are shared, and a fallback server is used on rate limits.
+
 **Where does the weather come from?**
 The Open-Meteo forecast API (`api.open-meteo.com/v1/forecast`). We request current conditions, 24 hourly values (temperature, humidity, apparent temperature, wind, UV, rain probability, day/night) and daily highs/lows, with `timezone=auto` and Unix timestamps. Open-Meteo combines national weather models; it needs no key, and the free tier is for non-commercial use under CC BY 4.0.
 

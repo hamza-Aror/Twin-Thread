@@ -16,6 +16,7 @@ import { WeatherGate } from '../components/WeatherGate';
 import { CategoryLegend, HeatRibbon } from '../components/HeatRibbon';
 import { CategoryBadge, Panel } from '../components/ui';
 import { DashboardMap } from '../components/DashboardMap';
+import { OfficialCriteriaCard } from '../components/OfficialCriteriaCard';
 import { CalculationDetails, RiskReasons } from '../components/RiskExplanation';
 import { CATEGORY_COLORS, CATEGORY_INK, DEFAULT_ELEVATED_CATEGORY, tint } from '../services/risk/categories';
 import { findElevatedPeriods } from '../services/risk/periods';
@@ -103,7 +104,7 @@ export function DashboardPage() {
               />
             </section>
 
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:grid-rows-[auto_auto_1fr]">
               {/* Risk summary (replaces the old "Why this risk level" page) */}
               <section
                 aria-labelledby="risk-title"
@@ -113,6 +114,7 @@ export function DashboardPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h2 id="risk-title" className="text-[15px] font-semibold text-fg">
                     {t('dash.riskTitle')}
+                    <span className="ms-2 align-middle text-xs font-normal text-muted">{t('dash.riskTag')}</span>
                   </h2>
                   <CategoryBadge category={category} />
                 </div>
@@ -124,8 +126,11 @@ export function DashboardPage() {
                 <p className="mt-3 text-xs text-faint">{t('why.estimate')}</p>
               </section>
 
+              {/* Official heatwave criteria: separate from CoolRoute's own estimate */}
+              <OfficialCriteriaCard snapshot={snap} className="order-2 lg:col-start-2 lg:row-start-2" />
+
               {/* Live resource map */}
-              <div className="order-2 min-w-0 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+              <div className="order-3 min-w-0 lg:col-start-1 lg:row-span-3 lg:row-start-1">
                 <DashboardMap />
               </div>
 
@@ -133,8 +138,9 @@ export function DashboardPage() {
               <Panel
                 title={t('dash.alertsTitle')}
                 aside={<LinkButton onClick={() => navigate('alerts')}>{t('dash.alertSettings')}</LinkButton>}
-                className="order-3 lg:col-start-2 lg:row-start-2"
+                className="order-4 lg:col-start-2 lg:row-start-3"
               >
+                <p className="-mt-1 mb-2 text-xs text-faint">{t('dash.alertsNote')}</p>
                 {!alerts.prefs.enabled ? (
                   <p className="text-sm text-muted">{t('alerts.disabled')}</p>
                 ) : alerts.alerts.length === 0 ? (

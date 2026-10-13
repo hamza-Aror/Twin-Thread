@@ -35,7 +35,8 @@ export function validateSuggestion(input: SuggestionInput): SuggestionError[] {
 
 export function loadSuggestions(): CommunityResource[] {
   const list = readJSON<CommunityResource[]>(SUGGESTIONS_KEY, []);
-  return Array.isArray(list) ? list.filter((r) => r && r.verification === 'unverified_report') : [];
+  // Entries saved by earlier versions have no "source"; they were always user reports.
+  return Array.isArray(list) ? list.filter((r) => r && r.verification === 'unverified_report').map((r) => ({ ...r, source: 'user_report' as const })) : [];
 }
 
 export function addSuggestion(input: SuggestionInput, now = Date.now()): CommunityResource {
@@ -51,6 +52,7 @@ export function addSuggestion(input: SuggestionInput, now = Date.now()): Communi
     hoursVerified: false,
     accessibility: clean(input.accessibility) || null,
     verification: 'unverified_report',
+    source: 'user_report',
     lastUpdated: new Date(now).toISOString().slice(0, 10),
     areaId: input.areaId,
   };

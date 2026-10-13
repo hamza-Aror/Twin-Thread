@@ -53,10 +53,11 @@ There are no environment variables or API keys. Open-Meteo's forecast and geocod
 | **Logo and favicon** | The CoolRoute logo is at the top of the sidebar (or the header on phones), and the icon shows in the browser tab. |
 | **Dashboard** | The landing page shows the city name, four condition cards, the live map beside "Heat risk now", alerts, the 24-hour ribbon and the daily forecast. |
 | **Why this level** | Inside "Heat risk now". Plain-language reasons come first; **Learn how this is calculated** opens the formula details. |
-| **Map** | Filter by type. Click a list item or marker for details. Sample entries are always labelled "Sample". Cities with no listed places say so honestly. |
+| **Map places (real data)** | The Dashboard map and *Resource map* load **real OpenStreetMap places** near the selected city: mapped drinking water, parks, and hotels (as *possible* indoor options). Click one for details, its map tags and a link to it on OpenStreetMap. Water tagged as not drinkable, private or disused is left out. No official cooling-centre list exists, and the legend says so. |
+| **Official heatwave criteria** | The card under "Heat risk now". Karachi uses the Karachi Heatwave Management Plan; Punjab cities (e.g. Lahore, Multan) use PMD RMC Punjab's thresholds. Other places honestly show "no published criteria". The card is always labelled a **rule-based estimate**, not a live PMD alert. |
 | **Phone layout** | In Chrome press **F12**, then the phone/tablet icon (Toggle device toolbar), and pick e.g. *iPhone 12 Pro*. The search moves to its own row and the menu button opens navigation. |
 
-**Offline backup for a demo:** open `http://localhost:5173/?demo=1`. It uses clearly labelled synthetic data and needs no internet for weather. The map tiles, city search and web fonts still need internet.
+**Offline backup for a demo:** open `http://localhost:5173/?demo=1`. It uses clearly labelled synthetic weather and **demo places** (marked "Demo"), and makes no OpenStreetMap requests. The map tiles, city search and web fonts still need internet.
 
 ## 3. Commands
 
@@ -85,11 +86,17 @@ Open-Meteo Forecast ──► validate + normalise ──► WeatherSnapshot (on
 |---|---|
 | `src/services/weather/` | Forecast client, geocoding client, response validation, cache, location sync |
 | `src/services/risk/` | Heat index formula, category bands, assessment, plain-language explanation |
+| `src/services/official/` | Published Pakistani heatwave criteria (Karachi plan, PMD RMC Punjab): framework selection and evaluation |
+| `src/services/places/` | OpenStreetMap places via Overpass: query, conservative classification, de-duplication, cache, errors |
 | `src/theme/` + `src/index.css` | Light/dark design tokens and the theme switch |
 | `src/components/`, `src/pages/` | Interface (Dashboard, map, search, outlook, simulator…) |
 | `src/i18n/` | English, plus draft Urdu and Sindhi |
 | `public/`, `assets/brand/` | Logo, favicons, and your original logo file |
 | `src/tests/`, `e2e/` | Unit/component tests and browser tests |
+
+**Two separate things, never mixed:**
+- **CoolRoute heat risk** (the app's own estimate): NWS heat index from temperature + humidity. That is why "Caution" can appear around 32 °C. For example, 32 °C at 30% humidity has a heat index of 30.8 °C (Caution band 27–32 °C).
+- **Official heatwave criteria** (`src/services/official/heatwaveFrameworks.ts`): PMD's published thresholds use forecast daily max/min **air temperature** only. They are applied only where a verified framework covers the place (Karachi plan, RMC Punjab), and labelled a rule-based estimate because no live PMD feed is integrated.
 
 **Risk method:**
 - **Indicator:** the U.S. NWS heat index (temperature + humidity).
@@ -108,7 +115,8 @@ There's no server or secret to configure. Keep the Open-Meteo and OpenStreetMap 
 
 ## 6. Known limitations
 
-- **Map entries:** they are samples (only near the suggested Pakistani cities) or unverified local reports. Most searched cities show "no listed resources yet". No verified cooling-centre dataset was available.
+- **Map places:** they come from OpenStreetMap volunteers. Coverage varies, and CoolRoute does not check whether a mapped water point works or is safe, or whether a hotel will let people in. No official cooling-centre source is integrated. Overpass is a free shared service: it can be slow or rate-limited, and the app then shows an error with *Try again*.
+- **Official criteria:** these are rule-based estimates from published criteria applied to Open-Meteo's forecast, not live PMD alerts, and only for Karachi and Punjab. The Karachi plan uses Jinnah International Airport temperatures. The Karachi city boundary is approximated as 35 km from the centre.
 - **Heat index assumes shade:** direct sun, workload, age and health change real risk.
 - **Forecast resolution:** values are model output for a grid cell, not station readings.
 - **City search:** finds places by name, using Open-Meteo's GeoNames-based index. "Name, Country" works by ranking matches; very small places may be missing.

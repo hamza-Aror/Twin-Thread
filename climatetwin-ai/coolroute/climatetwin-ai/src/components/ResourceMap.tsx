@@ -15,6 +15,8 @@ interface Props {
   centerLabel: string;
   ariaLabel: string;
   heightClass?: string;
+  /** Label for a marker tooltip (handles unnamed mapped places). */
+  labelFor?: (r: CommunityResource) => string;
 }
 
 function Recenter({ center }: { center: [number, number] }) {
@@ -42,12 +44,12 @@ function PickHandler({ picking, onPick }: { picking: boolean; onPick: (lat: numb
  * and forbids heavy use; this is fine for a prototype demo but a production deployment
  * should use a tile provider with a suitable plan.
  */
-export function ResourceMap({ center, resources, selectedId, onSelect, picking, onPick, pickedPoint, centerLabel, ariaLabel, heightClass = 'h-[420px]' }: Props) {
+export function ResourceMap({ center, resources, selectedId, onSelect, picking, onPick, pickedPoint, centerLabel, ariaLabel, heightClass = 'h-[420px]', labelFor = (r) => r.name ?? '' }: Props) {
   return (
     <div dir="ltr" className={`w-full overflow-hidden rounded-xl border border-line ${heightClass}`} role="region" aria-label={ariaLabel}>
       <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='Map tiles and place data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
@@ -59,6 +61,8 @@ export function ResourceMap({ center, resources, selectedId, onSelect, picking, 
         {resources.map((r) => {
           const color = RESOURCE_COLORS[r.type];
           const selected = r.id === selectedId;
+          // Demo entries and unverified reports have a dashed outline; mapped and official places are solid.
+          const tentative = r.verification === 'sample' || r.verification === 'unverified_report';
           return (
             <CircleMarker
               key={r.id}
@@ -68,12 +72,12 @@ export function ResourceMap({ center, resources, selectedId, onSelect, picking, 
                 color: selected ? 'var(--c-fg)' : color,
                 weight: selected ? 3 : 2,
                 fillColor: color,
-                fillOpacity: r.verification === 'verified' ? 0.9 : 0.45,
-                dashArray: r.verification === 'verified' ? undefined : '4 3',
+                fillOpacity: r.verification === 'official' ? 0.9 : tentative ? 0.3 : 0.6,
+                dashArray: tentative ? '4 3' : undefined,
               }}
               eventHandlers={{ click: () => onSelect(r.id) }}
             >
-              <Tooltip>{r.name}</Tooltip>
+              <Tooltip>{labelFor(r)}</Tooltip>
             </CircleMarker>
           );
         })}

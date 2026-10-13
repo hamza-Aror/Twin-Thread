@@ -7,6 +7,8 @@ import { CATEGORY_INK, CATEGORY_RULES, CATEGORY_SOURCE, DEFAULT_ELEVATED_CATEGOR
 import { fToC } from '../services/risk/heatIndex';
 import { OPEN_METEO_ENDPOINT } from '../services/weather/openMeteo';
 import { GEOCODING_ENDPOINT, describeLocation } from '../services/weather/geocoding';
+import { FRAMEWORKS, selectFramework } from '../services/official/heatwaveFrameworks';
+import { OVERPASS_ENDPOINTS, RADIUS_M } from '../services/places/overpass';
 import { STALE_AFTER_MS } from '../services/weather/cache';
 import { boundaryChecks, referenceChecks, scenarioChecks, type CheckResult } from '../services/selfChecks';
 import { formatClock, formatDateTime, minutesSince } from '../utils/format';
@@ -100,6 +102,44 @@ export function MethodPage() {
           Data older than {STALE_AFTER_MS / 60000} minutes is flagged as possibly out of date. The app refreshes every 30 minutes while the tab is visible. Current
           conditions are Open-Meteo model values for the grid cell, not a weather-station observation; hourly values are forecasts.
         </p>
+      </Panel>
+
+      <Panel title={t('method.twoTitle')}>
+        <div className="flex flex-col gap-3 text-sm text-fg">
+          <p>{t('method.twoApp')}</p>
+          <p>{t('method.twoOfficial')}</p>
+          <div>
+            <h3 className="font-semibold">{t('method.twoFrameworks')}</h3>
+            <ul className="mt-1 list-disc space-y-1 ps-5 text-muted">
+              {Object.values(FRAMEWORKS).map((fw) => (
+                <li key={fw.id}>
+                  <a href={fw.sourceUrl} target="_blank" rel="noreferrer">
+                    {fw.sourceTitle}
+                  </a>
+                  {`: ${fw.scope}. `}
+                  <span className="num">{Object.entries(fw.levelNames).filter(([k]) => k !== 'normal').map(([, v]) => v).join(', ')}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-muted">{t('method.twoNone')}</p>
+          <p className="text-muted">{t('method.twoEmergency')}</p>
+          <p className="text-muted">{t('method.twoDiffer')}</p>
+          <p className="rounded-lg bg-raised px-3 py-2">
+            {(() => {
+              const sel = selectFramework(location);
+              return sel.kind === 'framework' ? t('method.twoHere', { place: describeLocation(location), name: sel.framework.sourceTitle }) : t('method.twoHereNone', { place: describeLocation(location) });
+            })()}
+          </p>
+        </div>
+      </Panel>
+
+      <Panel title={t('method.placesTitle')}>
+        <div className="flex flex-col gap-2 text-sm text-fg">
+          <p>{t('method.placesBody', { water: RADIUS_M.water / 1000, other: RADIUS_M.park / 1000 })}</p>
+          <p className="text-muted">{t('method.placesLimits')}</p>
+          <p className="num text-xs text-faint break-all">{OVERPASS_ENDPOINTS.join(', ')}</p>
+        </div>
       </Panel>
 
       <Panel title={t('method.engine')}>
@@ -221,7 +261,8 @@ export function MethodPage() {
             <li>The heat index assumes shade and light wind. Direct sun, heavy work, clothing, age, health and medication change real risk.</li>
             <li>Open-Meteo values are model output for a grid cell (several km), not street-level readings. Urban heat islands and indoor heat are not captured.</li>
             <li>Very dry or very hot conditions fall outside the NWS chart; those values are flagged as limited confidence.</li>
-            <li>Resource locations are samples (near the suggested Pakistani cities only) or unverified local reports. No verified cooling-centre dataset was available, so most searched cities show no listed resources.</li>
+            <li>Map places come from OpenStreetMap and are not checked by CoolRoute; no official cooling-centre list is integrated. Demo entries appear only in demo mode.</li>
+            <li>Official heatwave levels are rule-based estimates from published criteria applied to a model forecast, not live PMD alerts, and only for Karachi and Punjab.</li>
             <li>City search finds places by name only, using Open-Meteo's GeoNames-based index; very small places may be missing.</li>
             <li>Urdu and Sindhi translations are drafts awaiting native-speaker review.</li>
             <li>Browser notifications only work while the page is open. There is no SMS, WhatsApp or push delivery.</li>
@@ -234,6 +275,7 @@ export function MethodPage() {
             <li>Text typed into the city search is sent to the Open-Meteo geocoding service to find matching places.</li>
             <li>Preferences, the last forecast, alert history and resource reports stay in this browser&apos;s local storage. Clearing site data removes them.</li>
             <li>Map tiles are requested from OpenStreetMap servers, which see the viewed map area.</li>
+            <li>The selected coordinates are sent to the Overpass API to find nearby mapped places.</li>
           </ul>
           <h3 className="mt-4 text-sm font-semibold text-fg">{t('method.attribution')}</h3>
           <ul className="mt-1 list-disc space-y-1 ps-5 text-sm text-muted">

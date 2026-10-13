@@ -35,9 +35,9 @@ describe('translations', () => {
 });
 
 describe('resources', () => {
-  it('ships only sample entries, never marked verified', () => {
+  it('demo entries are labelled as demo, never mapped or official', () => {
     expect(SAMPLE_RESOURCES.length).toBeGreaterThan(0);
-    expect(SAMPLE_RESOURCES.every((r) => r.verification === 'sample' && !r.hoursVerified)).toBe(true);
+    expect(SAMPLE_RESOURCES.every((r) => r.verification === 'sample' && r.source === 'demo' && !r.hoursVerified && /^Demo /.test(r.name ?? ''))).toBe(true);
   });
 
   it('validates suggestions', () => {

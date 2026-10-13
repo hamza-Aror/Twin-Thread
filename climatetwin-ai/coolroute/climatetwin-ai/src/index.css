@@ -50,8 +50,10 @@
 
   /* Resource types on the map */
   --res-water: #0a84d6;
+  --res-park: #2f8f3e;
+  --res-indoor: #8a4fd1;
   --res-cooling: #0e9b80;
-  --res-assistance: #8a4fd1;
+  --res-assistance: #c2547a;
 
   /* Charts and map */
   --chart-grid: #e6e8ec;
@@ -94,8 +96,10 @@
   --risk-unavailable-ink: #a9aeb8;
 
   --res-water: #4fb3ff;
+  --res-park: #5cc775;
+  --res-indoor: #b993f2;
   --res-cooling: #3cc4a6;
-  --res-assistance: #b993f2;
+  --res-assistance: #f08aa8;
 
   --chart-grid: #2c3038;
   --chart-axis: #8d93a0;
