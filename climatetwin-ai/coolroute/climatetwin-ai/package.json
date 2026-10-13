@@ -1,9 +1,12 @@
+
 {
   "name": "coolroute",
+  "productName": "ClimateTwin AI",
   "private": true,
   "version": "0.1.0",
   "description": "CoolRoute: heat-risk outlook and cooling resources (CL-02 Heatwave Safety Intelligence System)",
   "type": "module",
+  "main": "electron/main.cjs",
   "engines": {
     "node": ">=20.19.0"
   },
@@ -14,7 +17,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "electron:dev": "concurrently -k \"vite --host 127.0.0.1 --strictPort\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -34,10 +39,44 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^10.0.5",
+    "electron": "^44.7.1",
+    "electron-builder": "^26.15.3",
     "jsdom": "^26.1.0",
     "tailwindcss": "^4.1.0",
     "typescript": "~5.9.2",
     "vite": "^7.1.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^9.5.1"
+  },
+  "build": {
+    "appId": "com.climatetwin.ai",
+    "productName": "ClimateTwin AI",
+    "directories": {
+  "output": "C:/Temp/ClimateTwinRelease"
+},
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

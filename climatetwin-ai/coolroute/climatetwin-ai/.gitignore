@@ -7,3 +7,5 @@ test-results
 .DS_Store
 .env
 .env.local
+
+release/
