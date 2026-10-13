@@ -1,0 +1,275 @@
+@import 'tailwindcss';
+
+/*
+ * CoolRoute design tokens.
+ *
+ * One set of semantic names, two themes. Components only ever use the names
+ * (bg-panel, text-muted, var(--risk-danger) ...), never raw colours, so every
+ * component follows the theme automatically.
+ *
+ * Light is the default (no data-theme attribute or data-theme="light").
+ * Dark is selected with <html data-theme="dark">. The choice is saved by
+ * src/theme/theme.ts and applied before first paint by a script in index.html.
+ *
+ * Contrast: every text token is >= 4.5:1 on both its surface and the page
+ * background. Risk colours were checked for colour-blind separation with the
+ * data-viz palette validator (adjacent categories, both themes).
+ */
+:root {
+  color-scheme: light;
+  --c-ink: #f5f5f7; /* page background, input wells */
+  --c-panel: #ffffff; /* cards */
+  --c-raised: #eef0f3; /* hover, selected rows, segmented controls */
+  --c-line: #e2e4e9; /* hairline borders */
+  --c-line-strong: #c9ccd3;
+  --c-fg: #1d1d1f;
+  --c-muted: #5e6370;
+  --c-faint: #686d7a;
+  --c-accent: #0a6ed1; /* from the blue of the logo's shield */
+  --c-accent-hover: #085cb0;
+  --c-on-accent: #ffffff;
+  --c-teal: #0e7c68;
+  --c-amber: #a15a0b;
+  --c-alert: #c42b33;
+  --c-shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --c-shadow-pop: 0 8px 24px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06);
+
+  /* Heat-risk scale: fills (bars, dots, swatches) and ink (text) */
+  --risk-lower: #2fa88f;
+  --risk-caution: #efc23a;
+  --risk-extreme_caution: #e8701f;
+  --risk-danger: #c9283a;
+  --risk-extreme_danger: #7b2e8e;
+  --risk-unavailable: #9aa0ab;
+  --risk-lower-ink: #11745f;
+  --risk-caution-ink: #866300;
+  --risk-extreme_caution-ink: #ae4f0c;
+  --risk-danger-ink: #b32433;
+  --risk-extreme_danger-ink: #7b2e8e;
+  --risk-unavailable-ink: #5e6370;
+
+  /* Resource types on the map */
+  --res-water: #0a84d6;
+  --res-cooling: #0e9b80;
+  --res-assistance: #8a4fd1;
+
+  /* Charts and map */
+  --chart-grid: #e6e8ec;
+  --chart-axis: #686d7a;
+  --chart-line: #1d1d1f;
+  --chart-line-2: #9aa0ab;
+  --map-tile-filter: saturate(0.85);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-ink: #0f1115;
+  --c-panel: #1a1c21;
+  --c-raised: #25282f;
+  --c-line: #2c3038;
+  --c-line-strong: #3d424c;
+  --c-fg: #f2f3f5;
+  --c-muted: #a9aeb8;
+  --c-faint: #8d93a0;
+  --c-accent: #5aacff;
+  --c-accent-hover: #7fbfff;
+  --c-on-accent: #0b1220;
+  --c-teal: #3cc4a6;
+  --c-amber: #f2a54a;
+  --c-alert: #ff6b70;
+  --c-shadow-card: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --c-shadow-pop: 0 12px 32px rgb(0 0 0 / 0.5);
+
+  --risk-lower: #3cc4a6;
+  --risk-caution: #f2d15a;
+  --risk-extreme_caution: #f5913c;
+  --risk-danger: #e5404e;
+  --risk-extreme_danger: #c07ae8;
+  --risk-unavailable: #6b717d;
+  --risk-lower-ink: #3cc4a6;
+  --risk-caution-ink: #f2d15a;
+  --risk-extreme_caution-ink: #f5913c;
+  --risk-danger-ink: #ff6b70;
+  --risk-extreme_danger-ink: #cc8bf0;
+  --risk-unavailable-ink: #a9aeb8;
+
+  --res-water: #4fb3ff;
+  --res-cooling: #3cc4a6;
+  --res-assistance: #b993f2;
+
+  --chart-grid: #2c3038;
+  --chart-axis: #8d93a0;
+  --chart-line: #f2f3f5;
+  --chart-line-2: #6b717d;
+  /* OSM tiles are light-only; invert them into a dark map while keeping water blue and parks green. */
+  --map-tile-filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.6);
+}
+
+/* Map the tokens into Tailwind utilities (bg-panel, text-muted, border-line ...). */
+@theme inline {
+  --color-ink: var(--c-ink);
+  --color-panel: var(--c-panel);
+  --color-raised: var(--c-raised);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-faint: var(--c-faint);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-on-accent: var(--c-on-accent);
+  --color-teal: var(--c-teal);
+  --color-amber: var(--c-amber);
+  --color-alert: var(--c-alert);
+  --shadow-card: var(--c-shadow-card);
+  --shadow-pop: var(--c-shadow-pop);
+}
+
+@theme {
+  /* SF Pro on Apple devices, Inter elsewhere (loaded in index.html). */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-naskh: 'Noto Naskh Arabic', -apple-system, 'Inter', serif;
+  --font-nastaliq: 'Noto Nastaliq Urdu', 'Noto Naskh Arabic', serif;
+}
+
+@layer base {
+  html {
+    background: var(--c-ink);
+  }
+  body {
+    margin: 0;
+    background: var(--c-ink);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html[lang='ur'] body {
+    font-family: var(--font-nastaliq);
+    line-height: 2.05;
+    letter-spacing: 0;
+  }
+  html[lang='sd'] body {
+    font-family: var(--font-naskh);
+    line-height: 1.85;
+    letter-spacing: 0;
+  }
+  /* Numbers, times and units stay in the Latin face so they read the same in every language. */
+  .num,
+  input[type='number'] {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  a {
+    color: var(--c-accent);
+    text-underline-offset: 3px;
+  }
+  input[type='range'] {
+    accent-color: var(--c-accent);
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--c-accent);
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--c-accent) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Demo data and simulated results are always visually distinct: a quiet diagonal hatch. */
+.demo-hatch {
+  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c-accent) 9%, transparent) 0 6px, transparent 6px 14px);
+}
+
+/* The one orchestrated motion: the 24-hour ribbon fills in once on load. */
+@keyframes ribbon-in {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+.ribbon-cell {
+  transform-origin: bottom;
+  animation: ribbon-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop-in {
+  animation: pop-in 140ms ease-out both;
+}
+
+/* Leaflet, themed through the same tokens. */
+.leaflet-container {
+  background: var(--c-raised);
+  font-family: var(--font-sans);
+}
+.leaflet-tile-pane {
+  filter: var(--map-tile-filter);
+}
+.leaflet-bar,
+.leaflet-bar a {
+  background: var(--c-panel) !important;
+  color: var(--c-fg) !important;
+  border-color: var(--c-line) !important;
+}
+.leaflet-bar {
+  box-shadow: var(--c-shadow-card) !important;
+  border: 1px solid var(--c-line) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.leaflet-bar a:hover {
+  background: var(--c-raised) !important;
+}
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--c-panel) 88%, transparent) !important;
+  color: var(--c-muted) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--c-accent) !important;
+}
+.leaflet-tooltip {
+  background: var(--c-panel);
+  color: var(--c-fg);
+  border: 1px solid var(--c-line);
+  box-shadow: var(--c-shadow-pop);
+  border-radius: 8px;
+}
+.leaflet-tooltip-top::before {
+  border-top-color: var(--c-panel);
+}
+.leaflet-container.picking {
+  cursor: crosshair;
+}

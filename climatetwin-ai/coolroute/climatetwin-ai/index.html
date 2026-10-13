@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f5f7" />
+    <meta name="description" content="CoolRoute: heat-risk outlook, lower-risk activity times and nearby water and cooling resources for any city." />
+    <meta property="og:title" content="CoolRoute" />
+    <meta property="og:description" content="Heat-risk outlook and cooling resources for any city." />
+    <meta property="og:image" content="/icon-512.png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Apply the saved theme before first paint (light by default). Mirrors src/theme/theme.ts. -->
+    <script>
+      try {
+        var t = localStorage.getItem('ct:theme');
+        if (t === 'dark') {
+          document.documentElement.dataset.theme = 'dark';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f1115');
+        } else {
+          document.documentElement.dataset.theme = 'light';
+        }
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap"
+    />
+    <title>CoolRoute</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>CoolRoute needs JavaScript to load weather data.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

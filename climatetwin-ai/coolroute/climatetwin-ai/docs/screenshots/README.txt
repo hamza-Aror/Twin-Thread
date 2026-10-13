@@ -1,0 +1,1 @@
+Screenshots from the build sandbox. The chart, map tiles and icons were placeholders there because those libraries could not be installed; your local build shows the real ones. Weather values came from simulated API responses.
