@@ -244,35 +244,119 @@ export interface FetchPlacesOptions {
   force?: boolean;
 }
 
-async function postQuery(endpoint: string, query: string, fetchImpl: typeof fetch, timeoutMs: number): Promise<unknown> {
+
+interface DesktopOverpassBridge {
+  requestOverpass(input: {
+    endpoint: string;
+    query: string;
+    timeoutMs: number;
+  }): Promise<{ status: number; body: string }>;
+}
+
+async function postQuery(
+  endpoint: string,
+  query: string,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<unknown> {
   const controller = new AbortController();
   let timedOut = false;
+
   const timer = setTimeout(() => {
     timedOut = true;
     controller.abort();
   }, timeoutMs);
+
   let res: Response;
+
   try {
-    res = await fetchImpl(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: controller.signal,
-    });
+    const desktopBridge =
+      typeof window !== 'undefined'
+        ? (window as Window & {
+            climateTwinDesktop?: DesktopOverpassBridge;
+          }).climateTwinDesktop
+        : undefined;
+
+    if (desktopBridge?.requestOverpass) {
+      // Desktop app: make the request through Electron's main process.
+      const answer = await desktopBridge.requestOverpass({
+        endpoint,
+        query,
+        timeoutMs,
+      });
+
+      res = new Response(answer.body, { status: answer.status });
+    } else {
+      // Normal browser use: retain the original fetch behaviour.
+      res = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal,
+      });
+    }
   } catch {
-    throw timedOut ? new OverpassError('timeout', 'The map data service did not respond in time.') : new OverpassError('network', 'Could not reach the map data service.');
+    throw timedOut
+      ? new OverpassError(
+          'timeout',
+          'The map data service did not respond in time.',
+        )
+      : new OverpassError(
+          'network',
+          'Could not reach the map data service.',
+        );
   } finally {
     clearTimeout(timer);
   }
-  if (res.status === 429) throw new OverpassError('rate_limited', 'The map data service is rate-limiting requests.');
-  if (res.status >= 500) throw new OverpassError('busy', `The map data service is busy (HTTP ${res.status}).`);
-  if (!res.ok) throw new OverpassError('invalid_response', `The map data service returned HTTP ${res.status}.`);
+
+    if (res.status === 429) {
+    throw new OverpassError(
+      'rate_limited',
+      'The map data service is rate-limiting requests.',
+    );
+  }
+
+  if (res.status === 406) {
+    throw new OverpassError(
+      'busy',
+      'The map data endpoint rejected the request (HTTP 406).',
+    );
+  }
+
+  if (res.status === 408 || res.status === 504) {
+    throw new OverpassError(
+      'timeout',
+      'The map data service did not respond in time.',
+    );
+  }
+
+  if (res.status >= 500) {
+    throw new OverpassError(
+      'busy',
+      `The map data service is busy (HTTP ${res.status}).`,
+    );
+  }
+
+  if (!res.ok) {
+    throw new OverpassError(
+      'invalid_response',
+      `The map data service returned HTTP ${res.status}.`,
+    );
+  }
+
   try {
     return await res.json();
   } catch {
-    throw new OverpassError('invalid_response', 'The map data service returned data that is not valid JSON.');
+    throw new OverpassError(
+      'invalid_response',
+      'The map data service returned data that is not valid JSON.',
+    );
   }
 }
+
 
 /**
  * Places near a point. Cached for 12 hours; concurrent calls for the same point share one request;
@@ -303,7 +387,9 @@ export function fetchNearbyPlaces(lat: number, lon: number, areaId: string, opts
       } catch (err) {
         lastError = err instanceof OverpassError ? err : new OverpassError('invalid_response', String(err));
         // A malformed answer will not improve on another server; anything else is worth one more try.
-        if (lastError.kind === 'invalid_response') break;
+        if (lastError.kind === 'invalid_response') {
+  break;
+}
       }
     }
     throw lastError;

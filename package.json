@@ -1,7 +1,7 @@
 
 {
   "name": "coolroute",
-  "productName": "ClimateTwin AI",
+  "productName": "CoolRoute",
   "private": true,
   "version": "0.1.0",
   "description": "CoolRoute: heat-risk outlook and cooling resources (CL-02 Heatwave Safety Intelligence System)",
@@ -50,10 +50,10 @@
     "wait-on": "^9.5.1"
   },
   "build": {
-    "appId": "com.climatetwin.ai",
-    "productName": "ClimateTwin AI",
+    "appId": "com.coolroute.app",
+"productName": "CoolRoute",
     "directories": {
-  "output": "C:/Temp/ClimateTwinRelease"
+  "output": "C:/Temp/CoolRouteRelease"
 },
     "files": [
       "dist/**/*",
